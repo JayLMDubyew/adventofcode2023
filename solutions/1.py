@@ -1,6 +1,5 @@
 from pathlib import Path
 import re
-from word2number import w2n
 
 
 def convert_text_to_number(line):
