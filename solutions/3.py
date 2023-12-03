@@ -3,73 +3,81 @@ from pathlib import Path
 from collections import defaultdict
 
 
-def get_part_numbers(problem_lines):
-    part_dict = defaultdict(int)
+def get_gear_ratios(problem_lines):
+    gear_dict = generate_gear_dict(problem_lines)
+    print(gear_dict)
 
-    parts_sum = 0
-    number_re = r'(\d+)'
-    index = 0
-    num_lines = len(problem_lines)
+def get_part_count(problem_lines):
+    symbol_dict = generate_symbol_dict(problem_lines)
+    part_number_sum = 0
+
+    line_number = 0
     for line in problem_lines:
-        line = line.rstrip()
-        line_len = len(line)
-        matches = re.finditer(number_re, line)
-
-        for match in matches:
-            match_is_part = False
-            left_bound = match.span()[0]
-            right_bound = match.span()[1]
-            # ANYTHING adjacent to a symbol is a part.
-            # up-left, up-right, left, right, down-left, down-right, up, down
-
-
-            for i in range(left_bound,right_bound,1):
-                # up
-                if index > 0 and (not problem_lines[index - 1][i].isnumeric()) and (
-                        problem_lines[index - 1][i] != '.'):
-                    match_is_part = True
-
+        findings = re.finditer(r'(\d+)',line)
+        for finding in findings:
+            is_part = False
+            part_number = finding.groups()[0]
+            left = finding.span()[0]
+            right = finding.span()[1]
+            for index in range(left, right):
+                #left
+                if index-1 in symbol_dict[line_number]:
+                    is_part = True
+                #right
+                elif index+1 in symbol_dict[line_number]:
+                    is_part = True
+                #up
+                elif index in symbol_dict[line_number-1]:
+                    is_part = True
                 #down
-                if index + 1 < num_lines and (not problem_lines[index + 1][i].isnumeric()) and (
-                        problem_lines[index +1][i] != '.'):
-                    match_is_part = True
+                elif index in symbol_dict[line_number+1]:
+                    is_part = True
+                #up-left
+                elif index-1 in symbol_dict[line_number-1]:
+                    is_part = True
+                #up-right
+                elif index+1 in symbol_dict[line_number-1]:
+                    is_part = True
+                #down-left
+                elif index-1 in symbol_dict[line_number+1]:
+                    is_part = True
+                #down-right
+                elif index+1 in symbol_dict[line_number+1]:
+                    is_part = True
+            if is_part:
+                part_number_sum += int(part_number)
+        line_number += 1
 
 
-                if i > 0:
-                    # up-left
-                    if index > 0 and (not problem_lines[index - 1][i - 1].isnumeric()) and (
-                            problem_lines[index - 1][i - 1] != '.'):
-                        match_is_part = True
-                    # left
-                    if (not problem_lines[index][i - 1].isnumeric()) and (
-                            problem_lines[index][i - 1] != '.'):
-                        match_is_part = True
-                    # down-left
-                    if index + 1 < num_lines and (not problem_lines[index - 1][i - 1].isnumeric()) and (
-                            problem_lines[index + 1][i - 1] != '.'):
-                        match_is_part = True
+    return part_number_sum
+def is_special(character):
+    return not character.isdigit() and character != '.' and character != '\n'
 
-                    # up-right
-                if right_bound + 1 < line_len:
-                    if index > 0 and (not problem_lines[index - 1][i].isnumeric()) and (
-                            problem_lines[index - 1][i] != '.'):
-                        match_is_part = True
-                    # right
+def is_gear(character):
+    return character == '*'
 
-                    if (not problem_lines[index][i].isnumeric()) and (
-                            problem_lines[index][i] != '.'):
-                        match_is_part = True
-                    # down-right
-                    if index + 1 < num_lines and (not problem_lines[index + 1][i].isnumeric()) and (
-                            problem_lines[index + 1][i] != '.'):
-                        match_is_part = True
-
-            print(match.groups()[0], match_is_part)
-            if match_is_part:
-                parts_sum += int(match.groups()[0])
-        index += 1
-    return parts_sum
-
+def generate_gear_dict(problem_lines):
+    symbol_dict = defaultdict(set)
+    line_number = 0
+    for line in problem_lines:
+        x = 0
+        for character in line.rstrip():
+            if is_gear(character):
+                symbol_dict[line_number].add(x)
+            x += 1
+        line_number += 1
+    return symbol_dict
+def generate_symbol_dict(problem_lines):
+    symbol_dict = defaultdict(set)
+    line_number = 0
+    for line in problem_lines:
+        x = 0
+        for character in line.rstrip():
+            if is_special(character):
+                symbol_dict[line_number].add(x)
+            x += 1
+        line_number += 1
+    return symbol_dict
 
 class Day3:
     def __init__(self):
@@ -82,10 +90,11 @@ class Day3:
         print(f'Part 2: {self.part_2(problem_lines)} \n')
 
     def part_1(self, problem_lines):
-        return get_part_numbers(problem_lines)
+        return get_part_count(problem_lines)
 
 
     def part_2(self, problem_lines):
+        get_gear_ratios(problem_lines)
         return 0
 
 
